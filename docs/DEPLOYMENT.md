@@ -74,9 +74,10 @@ The repository is a single Vercel project. Everything needed is committed:
 - **`vercel.json`** (root) — installs both packages, builds the client and the
   API, publishes `client/dist`, and rewrites non-API paths to
   `index.html` so deep links work.
-- **`api/[...path].ts`** (root) — a catch-all function that wraps the same
-  Express app the local dev server runs (`server/dist/app.js`), so `/api/*`
-  routes behave identically in production.
+- **`api/index.ts`** (root) — a serverless function that wraps the same
+  Express app the local dev server runs (`server/dist/app.js`); a `/api/(.*)`
+  rewrite sends every API path to it, so routes behave identically in
+  production.
 
 ### Deploy from GitHub
 1. Push the repository to GitHub.

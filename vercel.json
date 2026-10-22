@@ -3,9 +3,12 @@
   "installCommand": "npm --prefix client ci && npm --prefix server ci",
   "buildCommand": "npm --prefix client run build && npm --prefix server run build",
   "outputDirectory": "client/dist",
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/((?!api(?:/|$)).*)", "destination": "/index.html" }
+  ],
   "functions": {
-    "api/[...path].ts": {
+    "api/index.ts": {
       "maxDuration": 30
     }
   }

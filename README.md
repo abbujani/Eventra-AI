@@ -312,7 +312,7 @@ functions + static client), Render, Railway, Fly.io and Docker are in
 Quick summary:
 
 - **Vercel (single project, recommended)** — import the repo; `vercel.json`
-  builds both packages and `api/[...path].ts` serves the API. No env vars
+  builds both packages and `api/index.ts` serves the API. No env vars
   required (keyless local mode by default).
 - **Client** — `npm run build:client`, deploy `client/dist` as a static site.
   For split-origin hosting only, set `VITE_API_BASE_URL` to your API origin at

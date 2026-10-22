@@ -8,9 +8,10 @@ import { createApp } from '../server/dist/app.js';
 const app = createApp();
 
 /**
- * Vercel catch-all function: every `/api/*` request is handled by the same
- * Express app that `server/src/index.ts` mounts locally, so routing and
- * behaviour are identical between the dev server and the deployment.
+ * Vercel function: `vercel.json` rewrites `/api/(.*)` to `/api`, and the
+ * original request URL is preserved, so this Express app sees exactly the same
+ * paths it serves locally (`/api/health`, `/api/ai/...`). Routing and behaviour
+ * are therefore identical between the dev server and the deployment.
  */
 export default function handler(req: IncomingMessage, res: ServerResponse): void {
   (app as unknown as (request: IncomingMessage, response: ServerResponse) => void)(req, res);
