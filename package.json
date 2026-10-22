@@ -2,6 +2,7 @@
   "name": "eventra-ai",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Eventra AI — Every Celebration, Intelligently Planned. A GenAI-powered celebration and event planning platform.",
   "scripts": {
     "install:all": "npm --prefix server install && npm --prefix client install",
