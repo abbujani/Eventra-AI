@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Eventra AI">
+  <rect width="64" height="64" rx="16" fill="#17152B" />
+  <path
+    d="M20 44V20h6v24h-6Zm12 0V20h6v24h-6Z"
+    fill="#7657E8"
+  />
+  <circle cx="44" cy="24" r="4" fill="#F5A7B8" />
+  <circle cx="44" cy="36" r="4" fill="#EEE9FF" />
+</svg>

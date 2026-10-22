@@ -1,0 +1,22 @@
+{
+  "name": "eventra-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Eventra AI — Every Celebration, Intelligently Planned. A GenAI-powered celebration and event planning platform.",
+  "scripts": {
+    "install:all": "npm --prefix server install && npm --prefix client install",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build": "npm --prefix server run build && npm --prefix client run build",
+    "build:client": "npm --prefix client run build",
+    "build:server": "npm --prefix server run build",
+    "start": "npm --prefix server start",
+    "test": "npm --prefix server run test && npm --prefix client run test",
+    "test:server": "npm --prefix server run test",
+    "test:client": "npm --prefix client run test",
+    "typecheck": "npm --prefix server run typecheck && npm --prefix client run typecheck"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

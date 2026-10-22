@@ -1,0 +1,307 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Brand palette */
+  --color-midnight: #17152b;
+  --color-midnight-2: #232046;
+  --color-midnight-3: #2f2b5c;
+  --color-violet: #7657e8;
+  --color-violet-2: #5b3fd6;
+  --color-violet-soft: #eee9ff;
+  --color-ivory: #fffdf8;
+  --color-ivory-2: #f7f4ee;
+  --color-rose: #f5a7b8;
+  --color-rose-soft: #fdeef2;
+  /* Brand palette. `--color-slate` is the specified #74748A nudged one step
+     darker so small metadata text clears the WCAG AA 4.5:1 threshold on the
+     ivory background (4.47:1 vs ~5.0:1). Visually identical. */
+  --color-slate: #6d6d80;
+  --color-slate-2: #a3a3b5;
+  --color-success: #20876a;
+  --color-success-soft: #e4f4ee;
+  --color-warning: #b4761b;
+  --color-warning-soft: #fdf3e2;
+  --color-danger: #c0392b;
+  --color-danger-soft: #fbe9e7;
+
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-display:
+    'Sora', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --shadow-card: 0 1px 2px rgba(23, 21, 43, 0.04), 0 8px 24px -12px rgba(23, 21, 43, 0.18);
+  --shadow-lift: 0 2px 6px rgba(23, 21, 43, 0.06), 0 16px 40px -18px rgba(23, 21, 43, 0.28);
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-ivory);
+    color: var(--color-midnight);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-violet);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .card {
+    background-color: #fff;
+    border: 1px solid rgba(23, 21, 43, 0.08);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-card);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.925rem;
+    padding: 0.625rem 1rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      border-color 160ms ease,
+      transform 120ms ease,
+      box-shadow 160ms ease;
+    white-space: nowrap;
+  }
+
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .btn-primary {
+    background-color: var(--color-violet);
+    color: #fff;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-violet-2);
+  }
+
+  .btn-dark {
+    background-color: var(--color-midnight);
+    color: #fff;
+  }
+
+  .btn-dark:hover:not(:disabled) {
+    background-color: var(--color-midnight-3);
+  }
+
+  .btn-secondary {
+    background-color: #fff;
+    color: var(--color-midnight);
+    border-color: rgba(23, 21, 43, 0.14);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--color-violet);
+    color: var(--color-violet-2);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--color-midnight);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background-color: rgba(23, 21, 43, 0.06);
+  }
+
+  .btn-danger {
+    background-color: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background-color: #f6d9d5;
+  }
+
+  .btn-sm {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.825rem;
+    border-radius: 0.6rem;
+  }
+
+  .btn-lg {
+    padding: 0.8rem 1.4rem;
+    font-size: 1.05rem;
+    border-radius: 0.9rem;
+  }
+
+  .input,
+  .select,
+  .textarea {
+    width: 100%;
+    border: 1px solid rgba(23, 21, 43, 0.16);
+    background-color: #fff;
+    color: var(--color-midnight);
+    border-radius: 0.75rem;
+    padding: 0.625rem 0.8rem;
+    font-size: 0.925rem;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .input::placeholder,
+  .textarea::placeholder {
+    color: var(--color-slate-2);
+  }
+
+  .input:focus,
+  .select:focus,
+  .textarea:focus {
+    outline: none;
+    border-color: var(--color-violet);
+    box-shadow: 0 0 0 3px rgba(118, 87, 232, 0.18);
+  }
+
+  .input:focus-visible,
+  .select:focus-visible,
+  .textarea:focus-visible {
+    outline: 2px solid var(--color-violet);
+    outline-offset: 1px;
+  }
+
+  .input[aria-invalid='true'],
+  .textarea[aria-invalid='true'],
+  .select[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+
+  .label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-midnight-2);
+    margin-bottom: 0.35rem;
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    color: var(--color-slate);
+    margin-top: 0.3rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background-color: var(--color-violet-soft);
+    color: var(--color-violet-2);
+  }
+
+  .badge-neutral {
+    background-color: rgba(23, 21, 43, 0.06);
+    color: var(--color-midnight-2);
+  }
+
+  .badge-success {
+    background-color: var(--color-success-soft);
+    color: var(--color-success);
+  }
+
+  .badge-warning {
+    background-color: var(--color-warning-soft);
+    color: var(--color-warning);
+  }
+
+  .badge-danger {
+    background-color: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+
+  .progress-track {
+    height: 0.5rem;
+    border-radius: 999px;
+    background-color: rgba(23, 21, 43, 0.08);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background-color: var(--color-violet);
+    transition: width 240ms ease;
+  }
+}
+
+@media print {
+  body {
+    background-color: #fff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-full {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  @page {
+    margin: 16mm;
+  }
+}
