@@ -49,7 +49,7 @@ npm run build:pages      # static build (client only, add VITE_LOCAL_ONLY/BASE_P
 
 ---
 
-## GitHub Pages — static build (current production target)
+## GitHub Pages — static build (optional mirror)
 
 GitHub Pages serves static files only, so this build compiles the deterministic
 planning engine into the browser bundle (`client/src/engine/`) and never calls

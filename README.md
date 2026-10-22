@@ -9,13 +9,14 @@ and risk mitigations — then manage every detail in a focused workspace.
 
 Built for the **Hack2Skill PromptWars Challenge 5** with Google Gemini.
 
-**Live demo:** <https://abbujani.github.io/Eventra-AI/> — hosted on GitHub
-Pages straight from `main`. That build runs the same deterministic planning
-engine **entirely in your browser**, so every feature works with no server, no
-API key and no data leaving the device.
+**Live demo:** <https://eventra-ai-cyan.vercel.app> — full-stack deployment
+directly from `main` (Express API + static client). Fully usable with no API
+key: the built-in local template engine answers every request and the UI labels
+the output honestly.
 
-**API deployment (optional):** <https://eventra-ai-cyan.vercel.app> — same app
-on Vercel with the Express API, keyless local mode by default.
+**Static mirror (GitHub Pages):** <https://abbujani.github.io/Eventra-AI/> —
+same app running entirely in the browser (no server). Note the path is
+case-sensitive: `Eventra-AI`, with the hyphen.
 
 ---
 
@@ -322,25 +323,30 @@ See [docs/SECURITY.md](docs/SECURITY.md) for the full model.
 
 ## Deployment
 
-**Primary: GitHub Pages (fully static, no server).** Every push to `main` runs
+**Primary: Vercel (full stack, from GitHub).** The repo is connected to the
+`eventra-ai` Vercel project, so every push to `main` deploys both packages;
+`vercel.json` builds the client + server and `api/index.ts` exposes the Express
+API. Production: <https://eventra-ai-cyan.vercel.app>. No environment variables
+are required — without `GEMINI_API_KEY` the API runs the keyless local mode.
+
+**Optional: GitHub Pages (fully static).** Pushing to `main` also runs
 [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml),
 which builds the client with `VITE_LOCAL_ONLY=true` and publishes
-`https://abbujani.github.io/Eventra-AI/`. In that build the planning engine
-(`client/src/engine/`) runs in the browser, so there is nothing to host except
-static files — and still no API key required.
+<https://abbujani.github.io/Eventra-AI/>. In that build the planning engine
+(`client/src/engine/`) runs in the browser, so there is no server and still no
+API key.
 
 Works anywhere Node runs for the full-stack path. Configs and instructions for
-Vercel (serverless functions + static client), Render, Railway, Fly.io and
-Docker are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Render, Railway, Fly.io and Docker are in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 Quick summary:
 
-- **GitHub Pages (primary)** — enable Pages with source *GitHub Actions* (the
-  workflow does this on first run), then push to `main`. Build command:
-  `VITE_BASE_PATH=/Eventra-AI/ VITE_LOCAL_ONLY=true npm --prefix client run build:pages`.
-- **Vercel (single project)** — import the repo; `vercel.json` builds both
-  packages and `api/index.ts` serves the API. No env vars required (keyless
-  local mode by default).
+- **Vercel (primary)** — import the repo; `vercel.json` builds both packages and
+  `api/index.ts` serves the API. No env vars required (keyless local mode by
+  default).
+- **GitHub Pages (static mirror)** — `VITE_BASE_PATH=/Eventra-AI/ VITE_LOCAL_ONLY=true npm --prefix client run build:pages`,
+  published by GitHub Actions. Path is case-sensitive.
 - **Client only** — `npm run build:client`, deploy `client/dist` as a static
   site. For split-origin hosting only, set `VITE_API_BASE_URL` to your API
   origin at build time.
