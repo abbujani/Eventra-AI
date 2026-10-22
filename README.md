@@ -9,6 +9,9 @@ and risk mitigations — then manage every detail in a focused workspace.
 
 Built for the **Hack2Skill PromptWars Challenge 5** with Google Gemini.
 
+**Live demo:** <https://eventra-ai-cyan.vercel.app> — fully usable with no API
+key (the built-in local planning engine handles every request).
+
 ---
 
 ## Table of contents
