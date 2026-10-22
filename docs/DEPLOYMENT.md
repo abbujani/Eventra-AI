@@ -29,6 +29,8 @@ On the **client**, the only variable is:
 | Variable | Notes |
 | --- | --- |
 | `VITE_API_BASE_URL` | Absolute API origin, no trailing slash (e.g. `https://api.yourapp.com`). If unset, the client calls `/api` on its own origin — use this for same-origin deployments. **Never put secrets here**; anything prefixed `VITE_` is bundled into public JavaScript. |
+| `VITE_LOCAL_ONLY` | `true` for the static GitHub Pages build: every AI request is answered by the in-browser engine and no API is called. |
+| `VITE_BASE_PATH` | Asset base path. `/` for root hosting; `/<repo-name>/` for GitHub Pages project sites. |
 
 ---
 
@@ -42,7 +44,49 @@ npm run build
 # Individually
 npm run build:server     # server/dist
 npm run build:client     # client/dist
+npm run build:pages      # static build (client only, add VITE_LOCAL_ONLY/BASE_PATH)
 ```
+
+---
+
+## GitHub Pages — static build (current production target)
+
+GitHub Pages serves static files only, so this build compiles the deterministic
+planning engine into the browser bundle (`client/src/engine/`) and never calls
+an API. Responses are still tagged `source: "local"`, and the UI states that
+everything runs in your browser.
+
+The workflow lives at `.github/workflows/deploy-pages.yml` and runs on every
+push to `main` (or manually via *Run workflow*).
+
+1. **Settings → Pages → Source: GitHub Actions.** The workflow passes
+   `enablement: true` to `actions/configure-pages`, which turns Pages on for
+   the repo on the first run when the token has permission; otherwise set the
+   source once in the UI.
+2. Push to `main`.
+3. Site: `https://<owner>.github.io/Eventra-AI/`.
+
+Reproduce locally:
+
+```bash
+cd client
+VITE_BASE_PATH=/Eventra-AI/ VITE_LOCAL_ONLY=true npm run build:pages
+```
+
+How the static build works:
+
+- `VITE_LOCAL_ONLY=true` makes `client/src/services/api.ts` answer every AI
+  call from the lazily loaded in-browser engine — no server, no network calls
+  for planning data.
+- `VITE_BASE_PATH` must match the repo name for project sites, with a leading
+  and trailing slash. It is threaded through Vite's `base` and the React Router
+  `basename` (from `import.meta.env.BASE_URL`).
+- `client/scripts/make-404.mjs` copies `index.html` to `404.html`; GitHub Pages
+  serves that shell for unknown paths, so deep links like `/events/:id` boot
+  the SPA at the original URL.
+- No `GEMINI_API_KEY` exists in this build and none is needed. Output is
+  visibly labelled as local templates, never as AI-generated.
+- Custom domain: set it in Pages settings and rebuild with `VITE_BASE_PATH=/`.
 
 ---
 
@@ -154,6 +198,10 @@ docker run -p 4000:4000 --env-file server/.env eventra-ai
 4. CORS: a request from an origin not in `CLIENT_ORIGIN` receives no
    `Access-Control-Allow-Origin` header.
 5. Errors return `{ "error": { "code", "message" } }` with no stack traces.
+6. GitHub Pages build: the landing page loads from
+   `https://<owner>.github.io/Eventra-AI/`, a hard refresh on an event deep
+   link restores the workspace, the plan badge reads *Local templates*, and the
+   browser devtools network panel shows no `/api` requests.
 
 ---
 

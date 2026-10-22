@@ -11,7 +11,7 @@ import {
 import { useAppStore } from '../../store/appStore.js';
 import { useEvent, useEventPlan } from '../../hooks/useEventData.js';
 import { useAiStatus } from '../../hooks/useAiStatus.js';
-import { ApiError, api } from '../../services/api.js';
+import { ApiError, IS_LOCAL_ONLY, api } from '../../services/api.js';
 import { formatCompactCurrency, formatCurrency } from '../../lib/format.js';
 import { combineDateAndTime } from '../../lib/dates.js';
 import { generateId } from '../../lib/id.js';
@@ -201,7 +201,9 @@ export function PlanPanel({ eventId }: { eventId: string }) {
             </h3>
             <p className="mx-auto mt-1 max-w-md text-sm text-slate">
               {aiStatus.state === 'local'
-                ? "Eventra's built-in template engine will produce a theme, budget breakdown, timeline, vendor checklist, menu ideas and risk mitigations from your saved event details. Connect a Gemini API key for AI-authored plans."
+                ? IS_LOCAL_ONLY
+                  ? "Eventra's built-in template engine will produce a theme, budget breakdown, timeline, vendor checklist, menu ideas and risk mitigations from your saved event details. Everything runs in your browser — no server or API key needed."
+                  : "Eventra's built-in template engine will produce a theme, budget breakdown, timeline, vendor checklist, menu ideas and risk mitigations from your saved event details. Connect a Gemini API key for AI-authored plans."
                 : 'Eventra AI will produce a theme, a realistic budget breakdown, a timeline, a vendor checklist, menu ideas and risk mitigations based on your saved event details.'}
             </p>
           </div>

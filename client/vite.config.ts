@@ -2,8 +2,13 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
+// GitHub Pages serves project sites from a sub-path (e.g. /Eventra-AI/).
+// `VITE_BASE_PATH` lets the Pages build set it without affecting root hosting.
+const base = process.env.VITE_BASE_PATH?.trim() || '/';
+
 // https://vite.dev/config/
 export default defineConfig({
+  base,
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,

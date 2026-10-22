@@ -15,6 +15,22 @@ import { toEventDetails } from '../types/index.js';
 const DEFAULT_BASE_URL = '';
 
 /**
+ * Static-hosting build flag (`VITE_LOCAL_ONLY=true`, used by the GitHub Pages
+ * workflow). Every AI call is then answered by the in-browser template engine,
+ * so the app needs no server, no API key and no network round-trip.
+ */
+export const IS_LOCAL_ONLY = import.meta.env.VITE_LOCAL_ONLY === 'true';
+
+/**
+ * Loads the in-browser engine only when it is actually used. API deployments
+ * never download this chunk.
+ */
+async function local() {
+  const { localApi } = await import('./localApi.js');
+  return localApi;
+}
+
+/**
  * Base URL for API requests.
  *
  * - Unset/empty → same-origin (`/api/...`). Correct for single-process
@@ -93,47 +109,67 @@ export interface HealthResponse {
 /** Every AI endpoint tags its response so the UI can label local output honestly. */
 export type AiSource = 'ai' | 'local';
 
+/** Synthetic health payload for the static build: local engine, no API key. */
+const LOCAL_HEALTH: HealthResponse = {
+  status: 'ok',
+  ai: { configured: false, model: 'browser-local-engine' },
+  planning: { mode: 'local' },
+};
+
 export const api = {
-  health: () => request<HealthResponse>('/api/health'),
+  health: () =>
+    IS_LOCAL_ONLY ? Promise.resolve(LOCAL_HEALTH) : request<HealthResponse>('/api/health'),
 
-  generatePlan: (event: Event) =>
-    request<{ plan: AIEventPlan; source?: AiSource }>('/api/ai/generate-plan', {
-      method: 'POST',
-      body: JSON.stringify({ event: toEventDetails(event) }),
-    }),
+  generatePlan: async (event: Event) =>
+    IS_LOCAL_ONLY
+      ? (await local()).generatePlan(event)
+      : request<{ plan: AIEventPlan; source?: AiSource }>('/api/ai/generate-plan', {
+          method: 'POST',
+          body: JSON.stringify({ event: toEventDetails(event) }),
+        }),
 
-  chat: (event: Event, planSummary: Record<string, unknown> | undefined, history: Array<{ role: 'user' | 'assistant'; content: string }>, message: string) =>
-    request<{ reply: string; source?: AiSource }>('/api/ai/chat', {
-      method: 'POST',
-      body: JSON.stringify({
-        event: toEventDetails(event),
-        planSummary,
-        history: history.slice(-20).map(({ role, content }) => ({ role, content })),
-        message,
-      }),
-    }),
+  chat: async (event: Event, planSummary: Record<string, unknown> | undefined, history: Array<{ role: 'user' | 'assistant'; content: string }>, message: string) =>
+    IS_LOCAL_ONLY
+      ? (await local()).chat(event, planSummary, history, message)
+      : request<{ reply: string; source?: AiSource }>('/api/ai/chat', {
+          method: 'POST',
+          body: JSON.stringify({
+            event: toEventDetails(event),
+            planSummary,
+            history: history.slice(-20).map(({ role, content }) => ({ role, content })),
+            message,
+          }),
+        }),
 
-  generateInvitation: (input: InvitationInput) =>
-    request<{ invitation: GeneratedInvitation; source?: AiSource }>('/api/ai/generate-invitation', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    }),
+  generateInvitation: async (input: InvitationInput) =>
+    IS_LOCAL_ONLY
+      ? (await local()).generateInvitation(input)
+      : request<{ invitation: GeneratedInvitation; source?: AiSource }>('/api/ai/generate-invitation', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        }),
 
-  generateMenu: (input: MenuInput) =>
-    request<{ menu: MenuPlan; source?: AiSource }>('/api/ai/generate-menu', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    }),
+  generateMenu: async (input: MenuInput) =>
+    IS_LOCAL_ONLY
+      ? (await local()).generateMenu(input)
+      : request<{ menu: MenuPlan; source?: AiSource }>('/api/ai/generate-menu', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        }),
 
-  suggestTasks: (input: TaskSuggestionInput) =>
-    request<{ tasks: TaskSuggestion[]; source?: AiSource }>('/api/ai/suggest-tasks', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    }),
+  suggestTasks: async (input: TaskSuggestionInput) =>
+    IS_LOCAL_ONLY
+      ? (await local()).suggestTasks(input)
+      : request<{ tasks: TaskSuggestion[]; source?: AiSource }>('/api/ai/suggest-tasks', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        }),
 
-  improveBudget: (input: BudgetAdviceInput) =>
-    request<{ advice: BudgetAdvice; source?: AiSource }>('/api/ai/improve-budget', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    }),
+  improveBudget: async (input: BudgetAdviceInput) =>
+    IS_LOCAL_ONLY
+      ? (await local()).improveBudget(input)
+      : request<{ advice: BudgetAdvice; source?: AiSource }>('/api/ai/improve-budget', {
+          method: 'POST',
+          body: JSON.stringify(input),
+        }),
 };

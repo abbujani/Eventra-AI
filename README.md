@@ -9,8 +9,13 @@ and risk mitigations — then manage every detail in a focused workspace.
 
 Built for the **Hack2Skill PromptWars Challenge 5** with Google Gemini.
 
-**Live demo:** <https://eventra-ai-cyan.vercel.app> — fully usable with no API
-key (the built-in local planning engine handles every request).
+**Live demo:** <https://abbujani.github.io/Eventra-AI/> — hosted on GitHub
+Pages straight from `main`. That build runs the same deterministic planning
+engine **entirely in your browser**, so every feature works with no server, no
+API key and no data leaving the device.
+
+**API deployment (optional):** <https://eventra-ai-cyan.vercel.app> — same app
+on Vercel with the Express API, keyless local mode by default.
 
 ---
 
@@ -187,6 +192,12 @@ own numbers, transparent budget ratios) and every response is tagged
 `GET /api/health` reports `planning.mode: "local"` — so the app is fully usable
 keyless while staying completely honest about what produced the output.
 
+**Static hosting parity.** The GitHub Pages build has no Express server, so the
+same engine is compiled into the client (`client/src/engine/`, ported from
+`server/src/services/local/`). It is loaded lazily and only when
+`VITE_LOCAL_ONLY=true`; API deployments keep using the server path unchanged.
+Both paths validate with the same Zod schemas and tag output `source: "local"`.
+
 ---
 
 ## Honest AI behaviour
@@ -261,7 +272,7 @@ No paid API key is required — the AI provider is mocked in all tests.
 ```bash
 npm test                # server + client
 npm run test:server     # 68 tests
-npm run test:client     # 97 tests
+npm run test:client     # 104 tests
 npm run typecheck       # both packages
 ```
 
@@ -273,7 +284,7 @@ budget-split math, `source: "local"` tagging, `planning.mode` in health),
 Gemini provider error mapping (quota, credentials, safety, malformed
 responses), rate limiting behaviour.
 
-**Client (97 tests)** — budget summary math, chart data, date helpers
+**Client (104 tests)** — budget summary math, chart data, date helpers
 (including DST-safe timezone combination), timeline overlap detection
 (including back-to-back vs. true conflicts), reducer actions and cascades,
 wizard step validation, accessible tab keyboard navigation, dashboard
@@ -281,8 +292,11 @@ rendering (single-CTA, per-currency aggregation that never sums across
 currencies, upcoming-events filtering), budget panel CRUD + over-budget
 alert, tasks add/complete, chat error handling (a failed request never
 duplicates the user's message), plan apply idempotency (re-apply skips
-duplicates, currency mismatch blocks), and storage provenance round-trips
-(`source` preserved; invalid values rejected rather than persisted).
+duplicates, currency mismatch blocks), storage provenance round-trips
+(`source` preserved; invalid values rejected rather than persisted), and the
+in-browser engine used by the static build (plan totals stay inside the
+declared budget, menu/invitation/task/advice shapes, chat grounding, empty
+input rejection).
 
 ---
 
@@ -308,18 +322,28 @@ See [docs/SECURITY.md](docs/SECURITY.md) for the full model.
 
 ## Deployment
 
-Works anywhere Node runs. Configs and instructions for Vercel (serverless
-functions + static client), Render, Railway, Fly.io and Docker are in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+**Primary: GitHub Pages (fully static, no server).** Every push to `main` runs
+[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml),
+which builds the client with `VITE_LOCAL_ONLY=true` and publishes
+`https://abbujani.github.io/Eventra-AI/`. In that build the planning engine
+(`client/src/engine/`) runs in the browser, so there is nothing to host except
+static files — and still no API key required.
+
+Works anywhere Node runs for the full-stack path. Configs and instructions for
+Vercel (serverless functions + static client), Render, Railway, Fly.io and
+Docker are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 Quick summary:
 
-- **Vercel (single project, recommended)** — import the repo; `vercel.json`
-  builds both packages and `api/index.ts` serves the API. No env vars
-  required (keyless local mode by default).
-- **Client** — `npm run build:client`, deploy `client/dist` as a static site.
-  For split-origin hosting only, set `VITE_API_BASE_URL` to your API origin at
-  build time.
+- **GitHub Pages (primary)** — enable Pages with source *GitHub Actions* (the
+  workflow does this on first run), then push to `main`. Build command:
+  `VITE_BASE_PATH=/Eventra-AI/ VITE_LOCAL_ONLY=true npm --prefix client run build:pages`.
+- **Vercel (single project)** — import the repo; `vercel.json` builds both
+  packages and `api/index.ts` serves the API. No env vars required (keyless
+  local mode by default).
+- **Client only** — `npm run build:client`, deploy `client/dist` as a static
+  site. For split-origin hosting only, set `VITE_API_BASE_URL` to your API
+  origin at build time.
 - **Server** — `npm run build:server`, start `server/dist/index.js`; optionally
   set `GEMINI_API_KEY` and `CLIENT_ORIGIN` in the host's environment variables.
 
@@ -329,11 +353,14 @@ Quick summary:
 
 ```
 .
-├── client/          React + Vite + Tailwind SPA
-├── server/          Express + GenAI API
-├── docs/            Deployment, AI setup, security
-├── .env.example     Documented environment template (placeholders only)
-├── package.json     Root orchestration scripts
+├── .github/workflows/       GitHub Pages deployment (push to main)
+├── client/                  React + Vite + Tailwind SPA
+│   └── src/engine/          In-browser planning engine (static build)
+├── server/                  Express + GenAI API
+│   └── src/services/local/  Deterministic local engine (API fallback)
+├── docs/                    Deployment, AI setup, security
+├── .env.example             Documented environment template (placeholders only)
+├── package.json             Root orchestration scripts
 └── README.md
 ```
 
