@@ -273,7 +273,7 @@ No paid API key is required — the AI provider is mocked in all tests.
 ```bash
 npm test                # server + client
 npm run test:server     # 68 tests
-npm run test:client     # 104 tests
+npm run test:client     # 105 tests
 npm run typecheck       # both packages
 ```
 
@@ -285,7 +285,7 @@ budget-split math, `source: "local"` tagging, `planning.mode` in health),
 Gemini provider error mapping (quota, credentials, safety, malformed
 responses), rate limiting behaviour.
 
-**Client (104 tests)** — budget summary math, chart data, date helpers
+**Client (105 tests)** — budget summary math, chart data, date helpers
 (including DST-safe timezone combination), timeline overlap detection
 (including back-to-back vs. true conflicts), reducer actions and cascades,
 wizard step validation, accessible tab keyboard navigation, dashboard
