@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -33,9 +33,19 @@ export function PlanPanel({ eventId }: { eventId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [confirmApply, setConfirmApply] = useState(false);
   const [appliedSummary, setAppliedSummary] = useState<string | null>(null);
+  // Visible proof that generation actually ran. The local template engine is
+  // deterministic, so a regenerated plan looks identical to the previous one —
+  // without this the button seems to do nothing.
+  const [lastRun, setLastRun] = useState<{ at: string; regenerated: boolean } | null>(null);
+
+  useEffect(() => {
+    setLastRun(null);
+    setError(null);
+  }, [eventId]);
 
   const generate = async () => {
     if (!event) return;
+    const regenerated = Boolean(plan);
     setGenerating(true);
     setError(null);
     try {
@@ -44,6 +54,7 @@ export function PlanPanel({ eventId }: { eventId: string }) {
       // result honestly ('ai' vs built-in 'local' templates).
       dispatch({ type: 'SET_PLAN', eventId, plan: { ...response.plan, source: response.source } });
       setAppliedSummary(null);
+      setLastRun({ at: new Date().toISOString(), regenerated });
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : 'Could not generate a plan. Please try again.',
@@ -169,6 +180,11 @@ export function PlanPanel({ eventId }: { eventId: string }) {
   // Plans saved before provenance tracking have no source — never claim "AI"
   // for something we cannot verify.
   const isAiPlan = plan?.source === 'ai';
+  const generatedTime = lastRun
+    ? new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(
+        new Date(lastRun.at),
+      )
+    : null;
 
   return (
     <div className="space-y-6">
@@ -254,6 +270,20 @@ export function PlanPanel({ eventId }: { eventId: string }) {
               {error}
             </div>
           )}
+          {lastRun && !generating && !error && (
+            <div
+              role="status"
+              className="flex items-start gap-3 rounded-xl border border-success/30 bg-success-soft px-4 py-3 text-sm text-success"
+            >
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>
+                Plan {lastRun.regenerated ? 'regenerated' : 'generated'} at{' '}
+                <time dateTime={lastRun.at}>{generatedTime}</time>.
+                {isLocalPlan &&
+                  ' Built-in templates are deterministic, so the same event details produce the same plan — edit the event for a different result.'}
+              </span>
+            </div>
+          )}
           {appliedSummary && (
             <div
               role="status"
@@ -297,7 +327,7 @@ export function PlanPanel({ eventId }: { eventId: string }) {
             <div className="mt-3 flex gap-2">
               <Button size="sm" variant="secondary" onClick={generate} disabled={generating}>
                 {generating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
-                Regenerate
+                {generating ? 'Regenerating…' : 'Regenerate'}
               </Button>
             </div>
           </section>
