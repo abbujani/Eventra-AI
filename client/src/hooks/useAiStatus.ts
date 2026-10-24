@@ -11,31 +11,40 @@ export type AiStatus =
 /** Module-level cache so the health check runs once per app session. */
 let cached: AiStatus | null = null;
 const listeners = new Set<(status: AiStatus) => void>();
+let inFlight: Promise<void> | null = null;
 
 function notify() {
   if (!cached) return;
-  listeners.forEach((listener) => listener(cached!));
+  for (const listener of listeners) {
+    listener(cached);
+  }
 }
 
 async function load() {
   if (cached && cached.state !== 'loading') return;
-  try {
-    const response = await api.health();
-    if (response.ai.configured) {
-      cached = { state: 'ready', model: response.ai.model };
-    } else if (response.planning?.mode === 'local') {
-      // No API key, but the server exposes its built-in local planning engine.
-      cached = { state: 'local' };
-    } else {
-      cached = { state: 'unconfigured' };
+  if (inFlight) return inFlight;
+  inFlight = (async () => {
+    try {
+      const response = await api.health();
+      if (response.ai.configured) {
+        cached = { state: 'ready', model: response.ai.model };
+      } else if (response.planning?.mode === 'local') {
+        // No API key, but the server exposes its built-in local planning engine.
+        cached = { state: 'local' };
+      } else {
+        cached = { state: 'unconfigured' };
+      }
+    } catch (error) {
+      cached = {
+        state: 'unreachable',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    } finally {
+      inFlight = null;
+      notify();
     }
-  } catch (error) {
-    cached = {
-      state: 'unreachable',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-  notify();
+  })();
+  return inFlight;
 }
 
 /**

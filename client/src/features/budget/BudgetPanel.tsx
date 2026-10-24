@@ -1,13 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import {
-  AlertTriangle,
-  Check,
-  Download,
-  Pencil,
-  Plus,
-  Trash2,
-  Wallet,
-} from 'lucide-react';
+import { AlertTriangle, Check, Download, Pencil, Plus, Trash2, Wallet } from 'lucide-react';
 import { useAppStore } from '../../store/appStore.js';
 import { useEvent, useEventBudget, useEventExpenses } from '../../hooks/useEventData.js';
 import { chartData } from '../../lib/budget.js';
@@ -19,6 +11,8 @@ import { Field, Input, Select, Textarea } from '../../components/ui/Field.js';
 import { Badge, EmptyState, ProgressBar } from '../../components/ui/Feedback.js';
 import { Modal } from '../../components/ui/Modal.js';
 import { BarChart, DonutChart } from '../../components/charts/Charts.js';
+import { ConfirmDeleteDialog } from '../../components/ui/ConfirmDeleteDialog.js';
+import { ErrorAlert } from '../../components/ui/ErrorAlert.js';
 import {
   DEFAULT_BUDGET_CATEGORIES,
   type Expense,
@@ -364,11 +358,7 @@ export function BudgetPanel({ eventId }: { eventId: string }) {
         description="Record an estimated or actual cost against a category."
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {formError && (
-            <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
-              {formError}
-            </p>
-          )}
+          {formError && <ErrorAlert message={formError} className="rounded-lg px-3 py-2" />}
           <Field label="Item name" htmlFor="expense-title" required>
             <Input
               id="expense-title"
@@ -462,33 +452,19 @@ export function BudgetPanel({ eventId }: { eventId: string }) {
         </form>
       </Modal>
 
-      <Modal
+      <ConfirmDeleteDialog
         open={confirmDelete !== null}
-        onClose={() => setConfirmDelete(null)}
         title="Delete expense"
-        size="sm"
-      >
-        <p className="text-sm text-midnight-2">
-          Delete “{confirmDelete?.title}”? This cannot be undone.
-        </p>
-        <div className="mt-5 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setConfirmDelete(null)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              if (confirmDelete) {
-                dispatch({ type: 'DELETE_EXPENSE', expenseId: confirmDelete.id });
-              }
-              setConfirmDelete(null);
-            }}
-          >
-            <Trash2 className="h-4 w-4" aria-hidden="true" />
-            Delete
-          </Button>
-        </div>
-      </Modal>
+        itemName={confirmDelete?.title ?? null}
+        description={confirmDelete ? `Delete “${confirmDelete.title}”? This cannot be undone.` : undefined}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) {
+            dispatch({ type: 'DELETE_EXPENSE', expenseId: confirmDelete.id });
+          }
+          setConfirmDelete(null);
+        }}
+      />
     </div>
   );
 }

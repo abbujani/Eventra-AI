@@ -11,15 +11,17 @@ import {
 import { useAppStore } from '../../store/appStore.js';
 import { useEvent, useEventPlan } from '../../hooks/useEventData.js';
 import { useAiStatus } from '../../hooks/useAiStatus.js';
-import { ApiError, IS_LOCAL_ONLY, api } from '../../services/api.js';
+import { IS_LOCAL_ONLY, api } from '../../services/api.js';
 import { formatCompactCurrency, formatCurrency } from '../../lib/format.js';
 import { combineDateAndTime } from '../../lib/dates.js';
 import { generateId } from '../../lib/id.js';
+import { getErrorMessage } from '../../lib/error.js';
 import { Button } from '../../components/ui/Button.js';
 import { Badge, EmptyState } from '../../components/ui/Feedback.js';
 import { Modal } from '../../components/ui/Modal.js';
 import { DonutChart } from '../../components/charts/Charts.js';
 import { AiStatusNotice } from '../shared/AiStatusNotice.js';
+import { ErrorAlert } from '../../components/ui/ErrorAlert.js';
 import type { Expense, Task, TimelineItem } from '../../types/index.js';
 import { cn } from '../../lib/cn.js';
 
@@ -56,9 +58,7 @@ export function PlanPanel({ eventId }: { eventId: string }) {
       setAppliedSummary(null);
       setLastRun({ at: new Date().toISOString(), regenerated });
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : 'Could not generate a plan. Please try again.',
-      );
+      setError(getErrorMessage(err, 'Could not generate a plan. Please try again.'));
     } finally {
       setGenerating(false);
     }
@@ -223,15 +223,7 @@ export function PlanPanel({ eventId }: { eventId: string }) {
                 : 'Eventra AI will produce a theme, a realistic budget breakdown, a timeline, a vendor checklist, menu ideas and risk mitigations based on your saved event details.'}
             </p>
           </div>
-          {error && (
-            <div
-              role="alert"
-              className="mx-auto flex max-w-md items-start gap-3 rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-left text-sm text-danger"
-            >
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>{error}</span>
-            </div>
-          )}
+          {error && <ErrorAlert message={error} className="mx-auto max-w-md text-left" />}
           <Button size="lg" onClick={generate} disabled={generating}>
             {generating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
             {generating ? 'Generating plan…' : 'Generate plan'}

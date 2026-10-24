@@ -1,15 +1,18 @@
 import { useState, type FormEvent } from 'react';
-import { ClipboardCopy, Mail, Sparkles, Wrench } from 'lucide-react';
+import { Mail, Sparkles } from 'lucide-react';
 import { useEvent } from '../../hooks/useEventData.js';
 import { useAiStatus } from '../../hooks/useAiStatus.js';
-import { useClipboard } from '../../hooks/useClipboard.js';
-import { ApiError, api } from '../../services/api.js';
+import { api } from '../../services/api.js';
 import { formatDate } from '../../lib/dates.js';
+import { getErrorMessage } from '../../lib/error.js';
 import { Button } from '../../components/ui/Button.js';
 import { Badge, EmptyState } from '../../components/ui/Feedback.js';
 import { ButtonSpinner } from '../../components/ui/Feedback.js';
 import { Field, Input, Select, Textarea } from '../../components/ui/Field.js';
 import { AiStatusNotice } from '../shared/AiStatusNotice.js';
+import { SourceBadge } from '../../components/ui/SourceBadge.js';
+import { CopyButton } from '../../components/ui/CopyButton.js';
+import { ErrorAlert } from '../../components/ui/ErrorAlert.js';
 import type { AiSource, GeneratedInvitation } from '../../types/index.js';
 
 const TONES = [
@@ -45,7 +48,6 @@ export function InvitationsPanel({ eventId }: { eventId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [invitation, setInvitation] = useState<GeneratedInvitation | null>(null);
   const [source, setSource] = useState<AiSource | null>(null);
-  const { copied, copyError, copy } = useClipboard();
 
   const generate = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -70,7 +72,7 @@ export function InvitationsPanel({ eventId }: { eventId: string }) {
       setInvitation(response.invitation);
       setSource(response.source ?? null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not generate an invitation.');
+      setError(getErrorMessage(err, 'Could not generate an invitation.'));
     } finally {
       setGenerating(false);
     }
@@ -185,11 +187,7 @@ export function InvitationsPanel({ eventId }: { eventId: string }) {
             />
           </Field>
 
-          {error && (
-            <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
-          )}
+          {error && <ErrorAlert message={error} className="rounded-lg px-3 py-2" />}
 
           <Button type="submit" disabled={generating}>
             {generating ? <ButtonSpinner /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
@@ -203,31 +201,13 @@ export function InvitationsPanel({ eventId }: { eventId: string }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-semibold text-midnight">Your invitation</h3>
-              <Badge tone={source === 'local' ? 'neutral' : source === 'ai' ? 'success' : 'neutral'}>
-                {source === 'local' ? (
-                  <Wrench className="h-3 w-3" aria-hidden="true" />
-                ) : (
-                  <Sparkles className="h-3 w-3" aria-hidden="true" />
-                )}
-                {source === 'local' ? 'Local templates' : source === 'ai' ? 'AI generated' : 'Generated'}
-              </Badge>
+              <SourceBadge source={source} />
               <Badge tone="neutral">{invitation.language}</Badge>
               <Badge tone="neutral">{invitation.tone}</Badge>
               <Badge tone="neutral">{invitation.channel}</Badge>
             </div>
-            <Button variant="secondary" size="sm" onClick={() => void copy(invitation.text)}>
-              <ClipboardCopy className="h-4 w-4" aria-hidden="true" />
-              {copied ? 'Copied' : 'Copy text'}
-            </Button>
+            <CopyButton text={invitation.text} label="Copy text" copiedLabel="Copied" />
           </div>
-          <span role="status" aria-live="polite" className="sr-only">
-            {copied ? 'Invitation copied to clipboard' : copyError ? 'Copy failed' : ''}
-          </span>
-          {copyError && (
-            <p role="alert" className="mt-2 text-xs text-danger">
-              Could not copy to clipboard. Select the text and copy it manually.
-            </p>
-          )}
           <div className="mt-3 whitespace-pre-wrap rounded-xl border border-midnight/10 bg-ivory px-4 py-4 text-sm leading-relaxed text-midnight-2">
             {invitation.text}
           </div>

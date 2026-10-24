@@ -26,6 +26,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const titleId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -87,6 +88,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
         className={cn(
           'card flex max-h-[92vh] w-full flex-col overflow-hidden p-0',
           size === 'sm' && 'max-w-md',
@@ -100,7 +102,11 @@ export function Modal({ open, onClose, title, description, children, footer, siz
             <h2 id={titleId} className="text-lg font-semibold text-midnight">
               {title}
             </h2>
-            {description && <p className="mt-0.5 text-sm text-slate">{description}</p>}
+            {description && (
+              <p id={descriptionId} className="mt-0.5 text-sm text-slate">
+                {description}
+              </p>
+            )}
           </div>
           <button
             type="button"

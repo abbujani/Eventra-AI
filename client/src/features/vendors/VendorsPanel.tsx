@@ -9,6 +9,8 @@ import { Button } from '../../components/ui/Button.js';
 import { Badge, EmptyState } from '../../components/ui/Feedback.js';
 import { Field, Input, Select, Textarea } from '../../components/ui/Field.js';
 import { Modal } from '../../components/ui/Modal.js';
+import { ConfirmDeleteDialog } from '../../components/ui/ConfirmDeleteDialog.js';
+import { ErrorAlert } from '../../components/ui/ErrorAlert.js';
 import { VENDOR_CATEGORIES, type Vendor, type VendorStatus } from '../../types/index.js';
 import { cn } from '../../lib/cn.js';
 
@@ -275,11 +277,7 @@ export function VendorsPanel({ eventId }: { eventId: string }) {
         description="Record vendors you have researched or contacted yourself."
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {formError && (
-            <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
-              {formError}
-            </p>
-          )}
+          {formError && <ErrorAlert message={formError} className="rounded-lg px-3 py-2" />}
           <Field label="Vendor name" htmlFor="vendor-name" required>
             <Input
               id="vendor-name"
@@ -386,29 +384,16 @@ export function VendorsPanel({ eventId }: { eventId: string }) {
         </form>
       </Modal>
 
-      <Modal
+      <ConfirmDeleteDialog
         open={confirmDelete !== null}
-        onClose={() => setConfirmDelete(null)}
         title="Delete vendor"
-        size="sm"
-      >
-        <p className="text-sm text-midnight-2">Delete “{confirmDelete?.name}”?</p>
-        <div className="mt-5 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setConfirmDelete(null)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              if (confirmDelete) dispatch({ type: 'DELETE_VENDOR', vendorId: confirmDelete.id });
-              setConfirmDelete(null);
-            }}
-          >
-            <Trash2 className="h-4 w-4" aria-hidden="true" />
-            Delete
-          </Button>
-        </div>
-      </Modal>
+        itemName={confirmDelete?.name ?? null}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) dispatch({ type: 'DELETE_VENDOR', vendorId: confirmDelete.id });
+          setConfirmDelete(null);
+        }}
+      />
     </div>
   );
 }

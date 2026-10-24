@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { AlertTriangle, Send, Sparkles, Trash2 } from 'lucide-react';
+import { Send, Sparkles, Trash2 } from 'lucide-react';
 import { useAppStore } from '../../store/appStore.js';
 import { useEvent, useEventBudget, useEventConversation, useEventPlan } from '../../hooks/useEventData.js';
 import { useAiStatus } from '../../hooks/useAiStatus.js';
-import { ApiError, api } from '../../services/api.js';
+import { api } from '../../services/api.js';
 import { generateId } from '../../lib/id.js';
+import { getErrorMessage } from '../../lib/error.js';
 import { Button } from '../../components/ui/Button.js';
 import { ButtonSpinner, EmptyState } from '../../components/ui/Feedback.js';
 import { Textarea } from '../../components/ui/Field.js';
 import { AiStatusNotice } from '../shared/AiStatusNotice.js';
+import { ErrorAlert } from '../../components/ui/ErrorAlert.js';
 
 const SUGGESTIONS = [
   'How can I reduce this budget by 15%?',
@@ -89,11 +91,7 @@ export function ChatPanel({ eventId }: { eventId: string }) {
         },
       });
     } catch (err) {
-      setError(
-        err instanceof ApiError
-          ? err.message
-          : 'The assistant could not respond. Please try again.',
-      );
+      setError(getErrorMessage(err, 'The assistant could not respond. Please try again.'));
       // The user's message is already in the transcript from the first dispatch;
       // re-adding it here would duplicate it on every failed request.
     } finally {
@@ -188,15 +186,7 @@ export function ChatPanel({ eventId }: { eventId: string }) {
         <div ref={bottomRef} />
       </div>
 
-      {error && (
-        <div
-          role="alert"
-          className="flex items-start gap-3 rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-sm text-danger"
-        >
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>{error}</span>
-        </div>
-      )}
+      {error && <ErrorAlert message={error} />}
 
       <form onSubmit={handleSubmit} className="flex items-end gap-2">
         <Textarea

@@ -4,7 +4,7 @@ import { ArrowLeft, Trash2 } from 'lucide-react';
 import { useAppStore } from '../store/appStore.js';
 import { useEvent } from '../hooks/useEventData.js';
 import { Button, ButtonLink } from '../components/ui/Button.js';
-import { Modal } from '../components/ui/Modal.js';
+import { ConfirmDeleteDialog } from '../components/ui/ConfirmDeleteDialog.js';
 import { EmptyState } from '../components/ui/Feedback.js';
 import { Tabs, type TabItem } from '../components/ui/Tabs.js';
 import { OverviewPanel } from '../features/overview/OverviewPanel.js';
@@ -102,32 +102,17 @@ export function EventWorkspacePage() {
         {activeTab === 'chat' && <ChatPanel eventId={eventId} />}
       </div>
 
-      <Modal
+      <ConfirmDeleteDialog
         open={confirmDelete}
-        onClose={() => setConfirmDelete(false)}
         title="Delete event"
-        size="sm"
-      >
-        <p className="text-sm text-midnight-2">
-          Delete “{event.title}” and all of its expenses, tasks, timeline items, vendors, plan and
-          conversation? This cannot be undone.
-        </p>
-        <div className="mt-5 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setConfirmDelete(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              dispatch({ type: 'DELETE_EVENT', eventId });
-              navigate('/dashboard');
-            }}
-          >
-            <Trash2 className="h-4 w-4" aria-hidden="true" />
-            Delete event
-          </Button>
-        </div>
-      </Modal>
+        confirmLabel="Delete event"
+        description={`Delete “${event.title}” and all of its expenses, tasks, timeline items, vendors, plan and conversation? This cannot be undone.`}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => {
+          dispatch({ type: 'DELETE_EVENT', eventId });
+          navigate('/dashboard');
+        }}
+      />
     </div>
   );
 }

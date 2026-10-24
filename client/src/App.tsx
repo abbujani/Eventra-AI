@@ -3,7 +3,6 @@ import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout.js';
 import { LandingPage } from './pages/LandingPage.js';
 import { DashboardPage } from './pages/DashboardPage.js';
-import { EventWizardPage } from './pages/EventWizardPage.js';
 import { NotFoundPage } from './pages/NotFoundPage.js';
 
 // The event workspace pulls in every planning panel (budget, timeline, tasks,
@@ -15,10 +14,17 @@ const EventWorkspacePage = lazy(() =>
   })),
 );
 
-function RouteFallback() {
+// The wizard uses react-hook-form; lazy-load it to shrink the initial bundle.
+const EventWizardPage = lazy(() =>
+  import('./pages/EventWizardPage.js').then((module) => ({
+    default: module.EventWizardPage,
+  })),
+);
+
+function RouteFallback({ message = 'Loading…' }: { message?: string }) {
   return (
     <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-live="polite">
-      <span className="animate-pulse text-sm font-medium text-slate">Loading workspace…</span>
+      <span className="animate-pulse text-sm font-medium text-slate">{message}</span>
     </div>
   );
 }
@@ -29,7 +35,14 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/events/new" element={<EventWizardPage />} />
+        <Route
+          path="/events/new"
+          element={
+            <Suspense fallback={<RouteFallback message="Loading wizard…" />}>
+              <EventWizardPage />
+            </Suspense>
+          }
+        />
         <Route
           path="/events/:eventId"
           element={

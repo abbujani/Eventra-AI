@@ -1,14 +1,17 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { AlertTriangle, Check, ListChecks, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Check, ListChecks, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useAppStore } from '../../store/appStore.js';
 import { useEvent, useEventTasks } from '../../hooks/useEventData.js';
-import { ApiError, api } from '../../services/api.js';
+import { api } from '../../services/api.js';
 import { formatDate, isOverdue, relativeDeadline, todayUtc } from '../../lib/dates.js';
 import { generateId } from '../../lib/id.js';
+import { getErrorMessage } from '../../lib/error.js';
 import { Button } from '../../components/ui/Button.js';
 import { ButtonSpinner, EmptyState } from '../../components/ui/Feedback.js';
 import { Field, Input, Select, Textarea } from '../../components/ui/Field.js';
 import { Modal } from '../../components/ui/Modal.js';
+import { ConfirmDeleteDialog } from '../../components/ui/ConfirmDeleteDialog.js';
+import { ErrorAlert } from '../../components/ui/ErrorAlert.js';
 import type { Priority, Task, TaskSuggestion } from '../../types/index.js';
 import { cn } from '../../lib/cn.js';
 
@@ -138,9 +141,7 @@ export function TasksPanel({ eventId }: { eventId: string }) {
       });
       setSuggestions(response.tasks);
     } catch (error) {
-      setSuggestError(
-        error instanceof ApiError ? error.message : 'Could not generate task suggestions.',
-      );
+      setSuggestError(getErrorMessage(error, 'Could not generate task suggestions.'));
     } finally {
       setSuggesting(false);
     }
@@ -185,15 +186,7 @@ export function TasksPanel({ eventId }: { eventId: string }) {
         </div>
       </div>
 
-      {suggestError && (
-        <div
-          role="alert"
-          className="flex items-start gap-3 rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-sm text-danger"
-        >
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>{suggestError}</span>
-        </div>
-      )}
+      {suggestError && <ErrorAlert message={suggestError} />}
 
       {suggestions && suggestions.length > 0 && (
         <section className="card border-violet/30 px-5 py-4">
@@ -341,11 +334,7 @@ export function TasksPanel({ eventId }: { eventId: string }) {
         title={editing ? 'Edit task' : 'Add task'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {formError && (
-            <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
-              {formError}
-            </p>
-          )}
+          {formError && <ErrorAlert message={formError} className="rounded-lg px-3 py-2" />}
           <Field label="Title" htmlFor="task-title" required>
             <Input
               id="task-title"
@@ -407,29 +396,16 @@ export function TasksPanel({ eventId }: { eventId: string }) {
         </form>
       </Modal>
 
-      <Modal
+      <ConfirmDeleteDialog
         open={confirmDelete !== null}
-        onClose={() => setConfirmDelete(null)}
         title="Delete task"
-        size="sm"
-      >
-        <p className="text-sm text-midnight-2">Delete “{confirmDelete?.title}”?</p>
-        <div className="mt-5 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setConfirmDelete(null)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              if (confirmDelete) dispatch({ type: 'DELETE_TASK', taskId: confirmDelete.id });
-              setConfirmDelete(null);
-            }}
-          >
-            <Trash2 className="h-4 w-4" aria-hidden="true" />
-            Delete
-          </Button>
-        </div>
-      </Modal>
+        itemName={confirmDelete?.title ?? null}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) dispatch({ type: 'DELETE_TASK', taskId: confirmDelete.id });
+          setConfirmDelete(null);
+        }}
+      />
     </div>
   );
 }

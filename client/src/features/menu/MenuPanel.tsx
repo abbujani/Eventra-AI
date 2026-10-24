@@ -1,13 +1,16 @@
 import { useState, type FormEvent } from 'react';
-import { AlertTriangle, ChefHat, ClipboardCopy, Sparkles, Wrench } from 'lucide-react';
+import { AlertTriangle, ChefHat, Sparkles } from 'lucide-react';
 import { useEvent } from '../../hooks/useEventData.js';
 import { useAiStatus } from '../../hooks/useAiStatus.js';
-import { useClipboard } from '../../hooks/useClipboard.js';
-import { ApiError, api } from '../../services/api.js';
+import { api } from '../../services/api.js';
+import { getErrorMessage } from '../../lib/error.js';
 import { Button } from '../../components/ui/Button.js';
 import { Badge, ButtonSpinner, EmptyState } from '../../components/ui/Feedback.js';
 import { Field, Input, Textarea } from '../../components/ui/Field.js';
 import { AiStatusNotice } from '../shared/AiStatusNotice.js';
+import { SourceBadge } from '../../components/ui/SourceBadge.js';
+import { CopyButton } from '../../components/ui/CopyButton.js';
+import { ErrorAlert } from '../../components/ui/ErrorAlert.js';
 import type { AiSource, MenuPlan } from '../../types/index.js';
 
 const SEGMENT_OPTIONS = ['Welcome', 'Cocktails', 'Lunch', 'High tea', 'Dinner', 'Dessert', 'Snacks'];
@@ -34,7 +37,6 @@ export function MenuPanel({ eventId }: { eventId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState<MenuPlan | null>(null);
   const [source, setSource] = useState<AiSource | null>(null);
-  const { copied, copyError, copy } = useClipboard();
 
   const generate = async (formEvent: FormEvent) => {
     formEvent.preventDefault();
@@ -61,29 +63,27 @@ export function MenuPanel({ eventId }: { eventId: string }) {
       setMenu(response.menu);
       setSource(response.source ?? null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not generate a menu.');
+      setError(getErrorMessage(err, 'Could not generate a menu.'));
     } finally {
       setGenerating(false);
     }
   };
 
-  const copyMenu = () => {
-    if (!menu) return;
-    const text = [
-      `${event?.title} — menu plan`,
-      '',
-      menu.summary,
-      '',
-      ...menu.segments.flatMap((segment) => [
-        segment.name,
-        ...segment.items.map((item) => `  • ${item.name} (${item.kind})${item.notes ? ` — ${item.notes}` : ''}`),
+  const menuText = menu
+    ? [
+        `${event?.title} — menu plan`,
         '',
-      ]),
-      ...menu.dietaryNotes.map((note) => `Dietary: ${note}`),
-      ...(menu.allergyWarning ? [`Warning: ${menu.allergyWarning}`] : []),
-    ].join('\n');
-    void copy(text);
-  };
+        menu.summary,
+        '',
+        ...menu.segments.flatMap((segment) => [
+          segment.name,
+          ...segment.items.map((item) => `  • ${item.name} (${item.kind})${item.notes ? ` — ${item.notes}` : ''}`),
+          '',
+        ]),
+        ...menu.dietaryNotes.map((note) => `Dietary: ${note}`),
+        ...(menu.allergyWarning ? [`Warning: ${menu.allergyWarning}`] : []),
+      ].join('\n')
+    : '';
 
   if (!event) return null;
   // Only a *resolved* failure blocks the form — during 'loading' the notice
@@ -198,11 +198,7 @@ export function MenuPanel({ eventId }: { eventId: string }) {
             />
           </Field>
 
-          {error && (
-            <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
-          )}
+          {error && <ErrorAlert message={error} className="rounded-lg px-3 py-2" />}
 
           <Button type="submit" disabled={generating}>
             {generating ? <ButtonSpinner /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
@@ -220,28 +216,10 @@ export function MenuPanel({ eventId }: { eventId: string }) {
                 <p className="mt-1 text-sm text-slate">{menu.summary}</p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge tone={source === 'ai' ? 'success' : 'neutral'}>
-                  {source === 'local' ? (
-                    <Wrench className="h-3 w-3" aria-hidden="true" />
-                  ) : (
-                    <Sparkles className="h-3 w-3" aria-hidden="true" />
-                  )}
-                  {source === 'local' ? 'Local templates' : source === 'ai' ? 'AI generated' : 'Generated'}
-                </Badge>
-                <Button variant="secondary" size="sm" onClick={copyMenu}>
-                  <ClipboardCopy className="h-4 w-4" aria-hidden="true" />
-                  {copied ? 'Copied' : 'Copy'}
-                </Button>
+                <SourceBadge source={source} />
+                <CopyButton text={menuText} label="Copy" copiedLabel="Copied" />
               </div>
             </div>
-            <span role="status" aria-live="polite" className="sr-only">
-              {copied ? 'Menu copied to clipboard' : copyError ? 'Copy failed' : ''}
-            </span>
-            {copyError && (
-              <p role="alert" className="mt-2 text-xs text-danger">
-                Could not copy to clipboard. Select the text and copy it manually.
-              </p>
-            )}
           </section>
 
           {menu.segments.map((segment) => (

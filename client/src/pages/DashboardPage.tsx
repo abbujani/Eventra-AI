@@ -29,12 +29,33 @@ export function DashboardPage() {
   const { events, tasks, expenses, activity, plans } = state;
 
   const metrics = useMemo(() => {
+    const tasksByEvent = new Map<string, typeof tasks>();
+    for (const task of tasks) {
+      const list = tasksByEvent.get(task.eventId);
+      if (list) {
+        list.push(task);
+      } else {
+        tasksByEvent.set(task.eventId, [task]);
+      }
+    }
+    const expensesByEvent = new Map<string, typeof expenses>();
+    for (const expense of expenses) {
+      const list = expensesByEvent.get(expense.eventId);
+      if (list) {
+        list.push(expense);
+      } else {
+        expensesByEvent.set(expense.eventId, [expense]);
+      }
+    }
     const map = new Map<string, EventMetrics>();
     for (const event of events) {
-      const eventTasks = tasks.filter((task) => task.eventId === event.id);
+      const eventTasks = tasksByEvent.get(event.id) ?? [];
       const total = eventTasks.length;
-      const completed = eventTasks.filter((task) => task.completed).length;
-      const eventExpenses = expenses.filter((expense) => expense.eventId === event.id);
+      let completed = 0;
+      for (let i = 0; i < eventTasks.length; i += 1) {
+        if (eventTasks[i].completed) completed += 1;
+      }
+      const eventExpenses = expensesByEvent.get(event.id) ?? [];
       map.set(event.id, {
         taskPercent: total === 0 ? 0 : Math.round((completed / total) * 100),
         taskTotal: total,
@@ -44,6 +65,8 @@ export function DashboardPage() {
     }
     return map;
   }, [events, tasks, expenses]);
+
+  const sortedEvents = useMemo(() => [...events].sort((a, b) => a.startDate.localeCompare(b.startDate)), [events]);
 
   const aggregate = useMemo(() => {
     // Never sum across currencies — a USD event plus an INR event would produce
@@ -80,12 +103,8 @@ export function DashboardPage() {
   const multiCurrency = aggregate.rows.length > 1;
 
   const upcomingEvents = useMemo(
-    () =>
-      events
-        .filter((event) => event.startDate >= todayUtc())
-        .sort((a, b) => a.startDate.localeCompare(b.startDate))
-        .slice(0, 3),
-    [events],
+    () => sortedEvents.filter((event) => event.startDate >= todayUtc()).slice(0, 3),
+    [sortedEvents],
   );
 
   const pendingTasks = useMemo(
