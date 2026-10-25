@@ -116,22 +116,40 @@ const LOCAL_HEALTH: HealthResponse = {
   planning: { mode: 'local' },
 };
 
-export const api = {
-  health: () =>
-    IS_LOCAL_ONLY ? Promise.resolve(LOCAL_HEALTH) : request<HealthResponse>('/api/health'),
+async function withLocalFallback<T>(
+  localCall: (api: Awaited<ReturnType<typeof local>>) => Promise<T>,
+  remoteCall: () => Promise<T>,
+): Promise<T> {
+  if (IS_LOCAL_ONLY) {
+    const api = await local();
+    return localCall(api);
+  }
+  return remoteCall();
+}
 
-  generatePlan: async (event: Event) =>
-    IS_LOCAL_ONLY
-      ? (await local()).generatePlan(event)
-      : request<{ plan: AIEventPlan; source?: AiSource }>('/api/ai/generate-plan', {
+export const api = {
+  health: () => (IS_LOCAL_ONLY ? Promise.resolve(LOCAL_HEALTH) : request<HealthResponse>('/api/health')),
+
+  generatePlan: (event: Event) =>
+    withLocalFallback(
+      (api) => api.generatePlan(event),
+      () =>
+        request<{ plan: AIEventPlan; source?: AiSource }>('/api/ai/generate-plan', {
           method: 'POST',
           body: JSON.stringify({ event: toEventDetails(event) }),
         }),
+    ),
 
-  chat: async (event: Event, planSummary: Record<string, unknown> | undefined, history: Array<{ role: 'user' | 'assistant'; content: string }>, message: string) =>
-    IS_LOCAL_ONLY
-      ? (await local()).chat(event, planSummary, history, message)
-      : request<{ reply: string; source?: AiSource }>('/api/ai/chat', {
+  chat: (
+    event: Event,
+    planSummary: Record<string, unknown> | undefined,
+    history: Array<{ role: 'user' | 'assistant'; content: string }>,
+    message: string,
+  ) =>
+    withLocalFallback(
+      (api) => api.chat(event, planSummary, history, message),
+      () =>
+        request<{ reply: string; source?: AiSource }>('/api/ai/chat', {
           method: 'POST',
           body: JSON.stringify({
             event: toEventDetails(event),
@@ -140,36 +158,45 @@ export const api = {
             message,
           }),
         }),
+    ),
 
-  generateInvitation: async (input: InvitationInput) =>
-    IS_LOCAL_ONLY
-      ? (await local()).generateInvitation(input)
-      : request<{ invitation: GeneratedInvitation; source?: AiSource }>('/api/ai/generate-invitation', {
+  generateInvitation: (input: InvitationInput) =>
+    withLocalFallback(
+      (api) => api.generateInvitation(input),
+      () =>
+        request<{ invitation: GeneratedInvitation; source?: AiSource }>('/api/ai/generate-invitation', {
           method: 'POST',
           body: JSON.stringify(input),
         }),
+    ),
 
-  generateMenu: async (input: MenuInput) =>
-    IS_LOCAL_ONLY
-      ? (await local()).generateMenu(input)
-      : request<{ menu: MenuPlan; source?: AiSource }>('/api/ai/generate-menu', {
+  generateMenu: (input: MenuInput) =>
+    withLocalFallback(
+      (api) => api.generateMenu(input),
+      () =>
+        request<{ menu: MenuPlan; source?: AiSource }>('/api/ai/generate-menu', {
           method: 'POST',
           body: JSON.stringify(input),
         }),
+    ),
 
-  suggestTasks: async (input: TaskSuggestionInput) =>
-    IS_LOCAL_ONLY
-      ? (await local()).suggestTasks(input)
-      : request<{ tasks: TaskSuggestion[]; source?: AiSource }>('/api/ai/suggest-tasks', {
+  suggestTasks: (input: TaskSuggestionInput) =>
+    withLocalFallback(
+      (api) => api.suggestTasks(input),
+      () =>
+        request<{ tasks: TaskSuggestion[]; source?: AiSource }>('/api/ai/suggest-tasks', {
           method: 'POST',
           body: JSON.stringify(input),
         }),
+    ),
 
-  improveBudget: async (input: BudgetAdviceInput) =>
-    IS_LOCAL_ONLY
-      ? (await local()).improveBudget(input)
-      : request<{ advice: BudgetAdvice; source?: AiSource }>('/api/ai/improve-budget', {
+  improveBudget: (input: BudgetAdviceInput) =>
+    withLocalFallback(
+      (api) => api.improveBudget(input),
+      () =>
+        request<{ advice: BudgetAdvice; source?: AiSource }>('/api/ai/improve-budget', {
           method: 'POST',
           body: JSON.stringify(input),
         }),
+    ),
 };
